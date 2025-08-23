@@ -7,55 +7,227 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+# Chatbot API
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Description
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+A mini-app exposing an API to query a simple chatbot using OpenAI and storing the interaction history. Includes a minimal frontend.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Requirements
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Laravel** 10+ (tested on 12)
+- **PHP** 8.2+
+- **Composer**
+- **SQLite**
+- **OpenAI API Key** (set in `.env`)
+- **Required PHP extensions:**
+  - pdo
+  - pdo_sqlite
+  - openssl
+  - mbstring
+  - tokenizer
+  - xml
+  - ctype
+  - json
+  - curl
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Local Installation & Usage
 
-## Laravel Sponsors
+### 1. Clone the repository
+```bash
+# Clone
+git clone https://github.com/BryanFG07/chatbot-api
+cd chatbot-api
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 2. Basic setup
+```bash
+# Linux / macOS / Windows PowerShell
+cp .env.example .env
+composer install
+php artisan key:generate
+```
 
-### Premium Partners
+### 3. SQLite Database
+```bash
+# Create file if it doesn't exist
+# ----------------------------
+# Linux / macOS
+# ----------------------------
+mkdir -p database
+touch database/database.sqlite
+php artisan migrate
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# ----------------------------
+# Windows PowerShell
+# ----------------------------
+New-Item -ItemType Directory -Path database -Force
+New-Item -ItemType File -Path database/database.sqlite -Force
+php artisan migrate
 
-## Contributing
+# ----------------------------
+# Windows CMD
+# ----------------------------
+if not exist database mkdir database
+type nul > database\database.sqlite
+php artisan migrate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-## Code of Conduct
+### 4. Add your OpenAI API Key
+Edit `.env` and add:
+```
+OPENAI_API_KEY=your_api_key_here
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 5. Run the app
+```bash
+php artisan serve
+# Open http://127.0.0.1:8000
+```
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Running with Laravel Sail (Docker)
 
-## License
+If you prefer to use Docker, you can run the project with Laravel Sail:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+# Clone the repository
+git clone https://github.com/BryanFG07/chatbot-api
+cd chatbot-api
+
+# Basic setup
+cp .env.example .env
+composer install
+php artisan key:generate
+
+# Start containers
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan migrate
+
+# Open http://127.0.0.1:8000
+```
+
+You can use MySQL or SQLite with Sail.
+
+### Using MySQL with Sail
+To use MySQL in a container with Sail:
+1. Uncomment and adjust the following lines in your `.env.example`:
+  ```
+  DB_CONNECTION=mysql
+  DB_HOST=mysql
+  DB_PORT=3306
+  DB_DATABASE=laravel
+  DB_USERNAME=sail
+  DB_PASSWORD=password
+  ```
+2. Copy `.env.example` to `.env` and make sure the values are correct.
+3. Run the Sail commands as usual:
+  ```bash
+  ./vendor/bin/sail up -d
+  ./vendor/bin/sail artisan migrate
+  ```
+4. Open http://127.0.0.1:8000
+
+---
+
+## API Endpoints
+
+### 1. `POST /api/ask`
+Sends a question to the chatbot and receives a response.
+
+---
+
+### 2. `GET /api/history`
+Retrieves chatbot interaction history.
+
+**Query Parameters:**
+- `limit` (optional, default: 10) → Number of interactions to return.
+- `keyword` (optional) → Filter interactions containing this keyword in the question or answer.
+
+**Behavior:**
+- If `keyword` is not specified, returns the last `limit` interactions.
+- If `limit` is not specified, returns the last 10 interactions by default.
+
+---
+
+### 3. `DELETE /api/history`
+Deletes all chatbot interaction history.
+
+**Optional:** Can be used to clear all saved interactions.
+
+
+
+---
+
+## Frontend
+- Form to ask questions and "Ask" button.
+- Area to display the chatbot's answer.
+- "History" section showing the last N interactions.
+- Input to set the maximum number of history responses.
+
+---
+
+## Project Structure
+
+- `app/Http/Controllers/ChatController.php` — Main controller
+- `app/Services/OpenAIService.php` — Service for OpenAI requests
+- `app/Models/Interaction.php` — Interaction model (history)
+- `database/migrations/` — Migrations
+- `resources/views/chat.blade.php` — Minimal frontend
+- `public/js/chat.js` — Frontend JS logic
+- `public/css/chat.css` — CSS styles
+
+---
+
+## Usage Examples
+
+```bash
+# Ask a question
+curl -X POST http://127.0.0.1:8000/api/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Give me a simple idea for financial wellness."}'
+
+# Get history
+curl http://127.0.0.1:8000/api/history?limit=10
+ 
+# Get history filtered by keyword
+curl http://127.0.0.1:8000/api/history?limit=10&keyword=finance
+
+# Delete all history
+curl -X DELETE http://127.0.0.1:8000/api/history
+```
+
+---
+
+## Troubleshooting
+
+### Network Error: SSL certificate problem
+If you get an error like:
+```
+Unable to connect to OpenAI cURL error 60: SSL certificate problem: unable to get local issuer certificate
+```
+This means your PHP/cURL cannot verify the SSL certificate for OpenAI. To fix:
+
+1. Download the certificate bundle `cacert.pem` from:
+   https://curl.se/docs/caextract.html
+2. Save it somewhere safe (e.g. `C:/php/cacert.pem`)
+3. Edit your `php.ini` and add or update:
+   ```
+   curl.cainfo = "C:/php/cacert.pem"
+   openssl.cafile = "C:/php/cacert.pem"
+   ```
+4. Restart your web server or PHP process.
+
+This will allow PHP to verify SSL certificates and connect to OpenAI securely.
+
+
+---
+
+## Author
+- BryanFG07
