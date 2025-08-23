@@ -186,15 +186,12 @@ class ChatController extends Controller
         return strlen($question) <= 1000 && strlen($answer) <= 10000;
     }
 
-    /**
-     * GET /api/history
-     * Returns the last N interactions (default 10)
-     */
     public function history(Request $request)
     {
         try {
             $limit = intval($request->query('limit', 10));
-            
+            $keyword = $request->query('keyword');
+
             // Validate limit
             if ($limit < 1 || $limit > 100) {
                 return response()->json([
@@ -204,8 +201,16 @@ class ChatController extends Controller
                 ], 422);
             }
 
-            $interactions = Interaction::orderBy('created_at', 'desc')
-                ->take($limit)
+            $query = Interaction::orderBy('created_at', 'desc');
+
+            if ($keyword) {
+                $query->where(function($q) use ($keyword) {
+                    $q->where('question', 'like', "%$keyword%")
+                    ->orWhere('answer', 'like', "%$keyword%");
+                });
+            }
+
+            $interactions = $query->take($limit)
                 ->get(['id', 'question', 'answer', 'created_at']);
 
             return response()->json([
@@ -213,7 +218,8 @@ class ChatController extends Controller
                 'data' => $interactions,
                 'meta' => [
                     'count' => $interactions->count(),
-                    'limit' => $limit
+                    'limit' => $limit,
+                    'keyword' => $keyword
                 ]
             ]);
 
@@ -240,6 +246,30 @@ class ChatController extends Controller
                 'success' => false,
                 'error' => 'Server error',
                 'message' => 'Unable to retrieve chat history'
+            ], 500);
+        }
+    }
+    
+    /**
+     * DELETE /api/history
+     * Deletes all chat history
+     */
+    public function deleteHistory(Request $request)
+    {
+        try {
+            Interaction::truncate();
+            return response()->json([
+                'success' => true,
+                'message' => 'History deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Delete History Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => 'Unable to delete history.'
             ], 500);
         }
     }
