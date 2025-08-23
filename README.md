@@ -32,6 +32,7 @@ A mini-app exposing an API to query a simple chatbot using OpenAI and storing th
   - ctype
   - json
   - curl
+  - zip
 
 ---
 
